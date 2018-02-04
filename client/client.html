@@ -1,33 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <title>Our simple HTTP server</title>
-  <link rel="stylesheet" type="text/css" href="/style.css">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
-  <script type="text/babel">
+    <head>
+        <title>Our simple HTTP server</title>
+        <link rel="stylesheet" type="text/css" href="/style.css">
 
-  </script>
-</head>
-<body>
-  <section id="top">
-    <h3>Status Code Tests</h3>
-    <select id="page">
-      <option value="/success">Success</option>
-      <option value="/badRequest">Bad Request</option>
-      <option value="/unauthorized">Unauthorized</option>
-      <option value="/forbidden">Forbidden</option>
-      <option value="/internal">Internal</option>
-      <option value="/notImplemented">Not Implemented</option>
-      <option value="/notFound">Not Found</option>
-    </select>
-    <select id="type">
-      <option value="application/json">JSON</option>
-      <option value="text/xml">XML</option>
-    </select>
-    <button id="send">Send</button>
-  </section>
-  <section id="content">
-  </section>
-</body>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
+        <script type="text/babel">
+const handleResponse = (xhr, parseResponse) => {
+    const content = document.querySelector('#content');
+    switch(xhr.status) {
+        case 200:
+            content.innerHTML = `<h1>Success</h1>`;
+            break;
+        case 400:
+            content.innerHTML = `<h1>Bad Request</h1>`;
+            break;
+        case 401:
+            content.innerHTML = `<h1>Unauthorized</h1>`;
+            break;
+        case 403:
+            content.innerHTML = `<h1>Forbidden</h1>`;
+            break;
+        case 404:
+            content.innerHTML = `<h1>Resource Not Found</h1>`;
+            break;
+        case 500:
+            content.innerHTML = `<h1>internal error something went wrong on the server</h1>`;
+            break;
+        case 501:
+            content.innerHTML = `<h1>not implemented check back later</h1>`;
+            break;
+        default:
+            content.innerHTML = `Error code not implemented by client.`;
+            break;
+    }
+    if(parseResponse) {
+        //parse the object and print it
+        if(xhr.getResponseHeader('content-type') === 'text/xml'){
+            const obj = (xhr.responseXML);
+            content.innerHTML += `<br><h2>`;
+            content.innerHTML += obj.getElementsByTagName('message')[0].firstChild.data;
+            content.innerHTML += `</h2>`;
+            console.log(obj.getElementsByTagName('response')[0]);
+        } else {
+            const obj = JSON.parse(xhr.response);
+            content.innerHTML += `<br><h2>`;
+            content.innerHTML += obj.message;
+            content.innerHTML += `</h2>`;
+            console.log(obj);
+        }
+    } else {
+        console.log('received');
+    }
+
+};
+
+const requestUpdate = (e) => {
+    const page = document.querySelector('#page').value;
+    const type = document.querySelector('#type').value;
+
+    const xhr = new XMLHttpRequest();
+    console.log(page);
+    xhr.open('GET', page);
+    xhr.setRequestHeader('Accept', type);
+
+
+    xhr.onload = () => handleResponse(xhr,true);
+    //else {
+    //    xhr.onload = () => handleResponse(xhr, false);
+    //}
+    xhr.send();
+    e.preventDefault()
+    return false;
+};
+
+
+const init = () => {
+    const sendButton = document.querySelector('#send');
+    const getUpdate = (e) => requestUpdate(e);
+    sendButton.addEventListener('click', getUpdate);
+};
+
+window.onload = init;
+
+        </script>
+    </head>
+    <body>
+        <section id="top">
+            <h3>Status Code Tests</h3>
+            <select id="page">
+                <option value="/success">Success</option>
+                <option value="/badRequest">Bad Request</option>
+                <option value="/unauthorized">Unauthorized</option>
+                <option value="/forbidden">Forbidden</option>
+                <option value="/internal">Internal</option>
+                <option value="/notImplemented">Not Implemented</option>
+                <option value="/notFound">Not Found</option>
+            </select>
+            <select id="type">
+                <option value="application/json">JSON</option>
+                <option value="text/xml">XML</option>
+            </select>
+            <button id="send">Send</button>
+        </section>
+        <section id="content">
+        </section>
+    </body>
 </html>
